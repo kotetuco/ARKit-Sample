@@ -10,8 +10,8 @@ import UIKit
 import SceneKit
 import ARKit
 
-class ViewController: UIViewController, ARSCNViewDelegate {
-
+class ViewController: UIViewController {
+    
     @IBOutlet var sceneView: ARSCNView!
     
     override func viewDidLoad() {
@@ -24,6 +24,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         sceneView.showsStatistics = true
         
         // Create a new scene
+        //        let scene = SCNScene(named: "art.scnassets/ship.scn")!
         let scene = SCNScene()
         
         // Set the scene to the view
@@ -35,7 +36,9 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         // Create a session configuration
         let configuration = ARWorldTrackingConfiguration()
-
+        configuration.planeDetection = .horizontal
+        configuration.isLightEstimationEnabled = true
+        
         // Run the view's session
         sceneView.session.run(configuration)
     }
@@ -51,30 +54,69 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         super.didReceiveMemoryWarning()
         // Release any cached data, images, etc that aren't in use.
     }
+}
 
-    // MARK: - ARSCNViewDelegate
-    
-/*
-    // Override to create and configure nodes for anchors added to the view's session.
-    func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
-        let node = SCNNode()
-     
-        return node
-    }
-*/
-    
+// MARK: - ARSCNViewDelegate
+extension ViewController: ARSCNViewDelegate {
     func session(_ session: ARSession, didFailWithError error: Error) {
         // Present an error message to the user
-        
     }
     
     func sessionWasInterrupted(_ session: ARSession) {
         // Inform the user that the session has been interrupted, for example, by presenting an overlay
-        
     }
     
     func sessionInterruptionEnded(_ session: ARSession) {
         // Reset tracking and/or remove existing anchors if consistent tracking is required
+    }
+    
+    func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
+        guard let planeAnchor = anchor as? ARPlaneAnchor else {
+            print("Error: This anchor is not ARPlaneAnchor. [\(#function)]")
+            return
+        }
         
+        // Builtinジオメトリ(平面)
+        let planeGeometory = SCNPlane(width: CGFloat(planeAnchor.extent.x),
+                                      height: CGFloat(planeAnchor.extent.z))
+        
+        // 色
+        planeGeometory.materials.first?.diffuse.contents = UIColor.blue
+        
+        // ジオメトリ情報を持ったノード情報
+        let geometryPlaneNode = SCNNode(geometry: planeGeometory)
+        
+        // 平面の中心座標を設定する
+        geometryPlaneNode.simdPosition = float3(planeAnchor.center.x, 0, planeAnchor.center.z)
+        
+        // 座標変換
+        geometryPlaneNode.eulerAngles.x = -.pi / 2
+        
+        // 不透明度設定
+        geometryPlaneNode.opacity = 0.8
+        
+        // アンカーに紐付いた情報に対してジオメトリ情報を持ったノードを追加する
+        // (Appleのサンプルだと下記だが、それ以外のサンプルだとメインスレッド上で実行しており、ひょっとすると下記だとエラーが発生するかもしれない)
+        node.addChildNode(geometryPlaneNode)
+    }
+    
+    func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
+        guard let planeAnchor = anchor as? ARPlaneAnchor else {
+            print("Error: This anchor is not ARPlaneAnchor. [\(#function)]")
+            return
+        }
+        
+        guard let geometryPlaneNode = node.childNodes.first,
+            let planeGeometory = geometryPlaneNode.geometry as? SCNPlane else {
+                print("Error: SCNPlane node is not found. [\(#function)]")
+                return
+        }
+        
+        // 平面の中心座標を設定する
+        geometryPlaneNode.simdPosition = float3(planeAnchor.center.x, 0, planeAnchor.center.z)
+        
+        // サイズを更新する
+        planeGeometory.width = CGFloat(planeAnchor.extent.x)
+        planeGeometory.height = CGFloat(planeAnchor.extent.z)
     }
 }
