@@ -13,18 +13,21 @@ import ARKit
 class ViewController: UIViewController {
     
     @IBOutlet var sceneView: ARSCNView!
+    private let context = CIContext()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         // Set the view's delegate
         sceneView.delegate = self
+        sceneView.session.delegate = self
         
         // Show statistics such as fps and timing information
         sceneView.showsStatistics = true
         
+//        sceneView.debugOptions = [ARSCNDebugOptions.showFeaturePoints]
+        
         // Create a new scene
-        //        let scene = SCNScene(named: "art.scnassets/ship.scn")!
         let scene = SCNScene()
         
         // Set the scene to the view
@@ -57,6 +60,7 @@ class ViewController: UIViewController {
 }
 
 // MARK: - ARSCNViewDelegate
+
 extension ViewController: ARSCNViewDelegate {
     func session(_ session: ARSession, didFailWithError error: Error) {
         // Present an error message to the user
@@ -118,5 +122,30 @@ extension ViewController: ARSCNViewDelegate {
         // サイズを更新する
         planeGeometory.width = CGFloat(planeAnchor.extent.x)
         planeGeometory.height = CGFloat(planeAnchor.extent.z)
+    }
+    
+    func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
+        guard let currentFrame = sceneView.session.currentFrame else {
+            print("Error: Current frame is nil. [\(#function)]")
+            return
+        }
+
+        // 表示時には90度回転する
+        let ciImage = CIImage(cvPixelBuffer: currentFrame.capturedImage).oriented(.right)
+        let imageFilter:CIFilter = CIFilter(name: "CIPhotoEffectProcess")!
+        imageFilter.setValue(ciImage, forKey: kCIInputImageKey)
+
+        // background.contentsはCGImageでセットする必要がある
+        if let filtImage = imageFilter.outputImage,
+            let cgImage = context.createCGImage(filtImage, from: ciImage.extent) {
+            sceneView.scene.background.contents = cgImage
+        }
+    }
+}
+
+// MARK: - ARSessionDelegate
+
+extension ViewController: ARSessionDelegate {
+    func session(_ session: ARSession, didUpdate frame: ARFrame) {
     }
 }
