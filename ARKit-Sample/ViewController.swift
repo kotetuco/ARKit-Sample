@@ -12,8 +12,11 @@ import ARKit
 
 class ViewController: UIViewController {
     
+    typealias FeaturePoint = (identifier: UInt64, point: vector_float3)
+    
     @IBOutlet var sceneView: ARSCNView!
     private let context = CIContext()
+    private var featurePointNodes:[UInt64:SCNNode] = [:]
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,7 +28,7 @@ class ViewController: UIViewController {
         // Show statistics such as fps and timing information
         sceneView.showsStatistics = true
         
-//        sceneView.debugOptions = [ARSCNDebugOptions.showFeaturePoints]
+//        sceneView.debugOptions = [ARSCNDebugOptions.showFeaturePoints, ARSCNDebugOptions.showWorldOrigin]
         
         // Create a new scene
         let scene = SCNScene()
@@ -51,6 +54,7 @@ class ViewController: UIViewController {
         
         // Pause the view's session
         sceneView.session.pause()
+        removeAllNodes()
     }
     
     override func didReceiveMemoryWarning() {
@@ -129,6 +133,31 @@ extension ViewController: ARSCNViewDelegate {
             print("Error: Current frame is nil. [\(#function)]")
             return
         }
+        
+        // 特徴点をプロット
+        if let rawFeaturePoints = currentFrame.rawFeaturePoints {
+            print("feature points: \(rawFeaturePoints.__count)")
+
+            let featurePoints = convert(from: rawFeaturePoints)
+            cleanupNodes(featurePoints: rawFeaturePoints)
+            
+            for featurePoint in featurePoints {
+                if featurePointNodes[featurePoint.identifier] != nil {
+                    featurePointNodes[featurePoint.identifier]!.position = SCNVector3Make(featurePoint.point.x,
+                                                                                          featurePoint.point.y,
+                                                                                          featurePoint.point.z)
+                } else {
+                    let geometryBoxNode = createBoxNode()
+                    geometryBoxNode.position = SCNVector3Make(featurePoint.point.x,
+                                                              featurePoint.point.y,
+                                                              featurePoint.point.z)
+                    sceneView.scene.rootNode.addChildNode(geometryBoxNode)
+                    featurePointNodes[featurePoint.identifier] = geometryBoxNode
+                }
+            }
+        } else {
+            removeAllNodes()
+        }
 
         // 表示時には90度回転する
         let ciImage = CIImage(cvPixelBuffer: currentFrame.capturedImage).oriented(.right)
@@ -147,5 +176,47 @@ extension ViewController: ARSCNViewDelegate {
 
 extension ViewController: ARSessionDelegate {
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
+    }
+}
+
+// MARK: - Private
+
+private extension ViewController {
+    func createBoxNode() -> SCNNode {
+        let boxGeometory = SCNBox(width: 0.003, height: 0.003, length: 0.003, chamferRadius: 0.004)
+        boxGeometory.materials.first?.diffuse.contents = randomColor()
+        return SCNNode(geometry: boxGeometory)
+    }
+    
+    func randomColor(alpha:CGFloat = 1.0) -> UIColor {
+        let red:CGFloat = CGFloat(drand48())
+        let green:CGFloat = CGFloat(drand48())
+        let blue:CGFloat = CGFloat(drand48())
+        return UIColor(red: red, green: green, blue: blue, alpha: alpha)
+    }
+    
+    func convert(from rawFeaturePoints: ARPointCloud) -> [FeaturePoint] {
+        var index = 0
+        return rawFeaturePoints.identifiers.flatMap({ (identifier) -> FeaturePoint in
+            let featurePoint = FeaturePoint(identifier: identifier, point: rawFeaturePoints.points[index])
+            index += 1
+            return featurePoint
+        })
+    }
+
+    func cleanupNodes(featurePoints: ARPointCloud) {
+        for drawFeaturePoint in featurePointNodes {
+            if !featurePoints.identifiers.contains(drawFeaturePoint.key) {
+                featurePointNodes[drawFeaturePoint.key]?.removeFromParentNode()
+                featurePointNodes.removeValue(forKey: drawFeaturePoint.key)
+            }
+        }
+    }
+    
+    func removeAllNodes() {
+        for drawFeaturePoint in featurePointNodes {
+            featurePointNodes[drawFeaturePoint.key]?.removeFromParentNode()
+        }
+        featurePointNodes.removeAll()
     }
 }
