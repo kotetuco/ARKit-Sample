@@ -23,7 +23,7 @@ class ViewController: UIViewController {
         sceneView.session.delegate = self
         
         // Show statistics such as fps and timing information
-        sceneView.showsStatistics = true
+//        sceneView.showsStatistics = true
         
 //        sceneView.debugOptions = [ARSCNDebugOptions.showFeaturePoints]
         
@@ -97,11 +97,18 @@ extension ViewController: ARSCNViewDelegate {
         geometryPlaneNode.eulerAngles.x = -.pi / 2
         
         // 不透明度設定
-        geometryPlaneNode.opacity = 0.8
+        geometryPlaneNode.opacity = 0.33
         
         // アンカーに紐付いた情報に対してジオメトリ情報を持ったノードを追加する
         // (Appleのサンプルだと下記だが、それ以外のサンプルだとメインスレッド上で実行しており、ひょっとすると下記だとエラーが発生するかもしれない)
         node.addChildNode(geometryPlaneNode)
+
+        if let paperModelNode = paperModelNode() {
+            paperModelNode.simdPosition = float3(planeAnchor.center.x, 0, planeAnchor.center.z)
+            // 「平面の上に載っている」感を出すため、平面より少しだけy座標を移動する
+            paperModelNode.position.y += 0.0001
+            node.addChildNode(paperModelNode)
+        }
     }
     
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
@@ -123,29 +130,28 @@ extension ViewController: ARSCNViewDelegate {
         planeGeometory.width = CGFloat(planeAnchor.extent.x)
         planeGeometory.height = CGFloat(planeAnchor.extent.z)
     }
-    
-    func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
-        guard let currentFrame = sceneView.session.currentFrame else {
-            print("Error: Current frame is nil. [\(#function)]")
-            return
-        }
-
-        // 表示時には90度回転する
-        let ciImage = CIImage(cvPixelBuffer: currentFrame.capturedImage).oriented(.right)
-        let imageFilter:CIFilter = CIFilter(name: "CIPhotoEffectProcess")!
-        imageFilter.setValue(ciImage, forKey: kCIInputImageKey)
-
-        // background.contentsはCGImageでセットする必要がある
-        if let filtImage = imageFilter.outputImage,
-            let cgImage = context.createCGImage(filtImage, from: ciImage.extent) {
-            sceneView.scene.background.contents = cgImage
-        }
-    }
 }
 
 // MARK: - ARSessionDelegate
 
 extension ViewController: ARSessionDelegate {
-    func session(_ session: ARSession, didUpdate frame: ARFrame) {
+}
+
+// MARK: - Private
+
+private extension ViewController {
+    func paperModelNode() -> SCNNode? {
+        guard let textureImage = UIImage(named: "texture_image") else {
+            print("Error: Texture image not found. [\(#function)]")
+            return nil
+        }
+        
+        let scale: CGFloat = 0.2
+        let boxGeometory = SCNBox(width: textureImage.size.width * scale / textureImage.size.height,
+                                  height: 0.00000001,
+                                  length: scale,
+                                  chamferRadius: 0)
+        boxGeometory.firstMaterial?.diffuse.contents = textureImage
+        return SCNNode(geometry: boxGeometory)
     }
 }
