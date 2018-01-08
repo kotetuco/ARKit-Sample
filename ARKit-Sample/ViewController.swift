@@ -196,12 +196,10 @@ private extension ViewController {
     }
     
     func convert(from rawFeaturePoints: ARPointCloud) -> [FeaturePoint] {
-        var index = 0
-        return rawFeaturePoints.identifiers.flatMap({ (identifier) -> FeaturePoint in
-            let featurePoint = FeaturePoint(identifier: identifier, point: rawFeaturePoints.points[index])
-            index += 1
+        return zip(rawFeaturePoints.identifiers, rawFeaturePoints.points).flatMap { (identifier, point) -> FeaturePoint in
+            let featurePoint = FeaturePoint(identifier: identifier, point: point)
             return featurePoint
-        })
+        }
     }
 
     func cleanupNodes(featurePoints: ARPointCloud) {
