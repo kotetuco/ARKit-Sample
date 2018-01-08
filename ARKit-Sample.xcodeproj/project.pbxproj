@@ -13,6 +13,7 @@
 		4A2B4AE91FF0BDE10067E143 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4A2B4AE81FF0BDE10067E143 /* Assets.xcassets */; };
 		4A2B4AEC1FF0BDE10067E143 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4A2B4AEA1FF0BDE10067E143 /* LaunchScreen.storyboard */; };
 		4A2B4AF71FF0BDE10067E143 /* ARKit_SampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2B4AF61FF0BDE10067E143 /* ARKit_SampleUITests.swift */; };
+		9CF2565A2003B826000245F9 /* FeaturePointsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CF256592003B826000245F9 /* FeaturePointsManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,6 +37,7 @@
 		4A2B4AF21FF0BDE10067E143 /* ARKit-SampleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "ARKit-SampleUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4A2B4AF61FF0BDE10067E143 /* ARKit_SampleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARKit_SampleUITests.swift; sourceTree = "<group>"; };
 		4A2B4AF81FF0BDE10067E143 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9CF256592003B826000245F9 /* FeaturePointsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeaturePointsManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,6 +80,7 @@
 			isa = PBXGroup;
 			children = (
 				4A2B4ADF1FF0BDE10067E143 /* AppDelegate.swift */,
+				9CF256592003B826000245F9 /* FeaturePointsManager.swift */,
 				4A2B4AE31FF0BDE10067E143 /* ViewController.swift */,
 				4A2B4AE51FF0BDE10067E143 /* Main.storyboard */,
 				4A2B4AE81FF0BDE10067E143 /* Assets.xcassets */,
@@ -199,6 +202,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9CF2565A2003B826000245F9 /* FeaturePointsManager.swift in Sources */,
 				4A2B4AE41FF0BDE10067E143 /* ViewController.swift in Sources */,
 				4A2B4AE01FF0BDE10067E143 /* AppDelegate.swift in Sources */,
 			);
